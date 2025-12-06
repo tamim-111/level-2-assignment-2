@@ -20,7 +20,7 @@ const initDB = async () => {
         vehicle_name TEXT NOT NULL,
         type TEXT NOT NULL CHECK (type IN ('car', 'bike', 'van', 'SUV')),
         registration_number TEXT UNIQUE NOT NULL,
-        daily_rent_price INT NOT NULL CHECK (daily_rent_price > 0)
+        daily_rent_price INT NOT NULL CHECK (daily_rent_price > 0),
         availability_status TEXT NOT NULL CHECK (availability_status IN ('available', 'booked'))
         )`)
 

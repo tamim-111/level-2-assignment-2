@@ -27,7 +27,7 @@ const getAllBookings = async (req: Request, res: Response) => {
 
         if (!user) throw new Error("User not found");
 
-        // Admin: get all bookings
+
         if (user.role === "admin") {
             const result = await bookingsServices.getAllBookingsFromDB();
 
@@ -53,7 +53,6 @@ const getAllBookings = async (req: Request, res: Response) => {
             });
         }
 
-        // Customer: get own bookings
         if (user.role === "customer") {
             const result = await bookingsServices.getSingleBookingsFromDB(user.id);
 
@@ -94,7 +93,7 @@ const updateSingleBooking = async (req: Request, res: Response) => {
             throw new Error("Invalid status");
         }
 
-        const updatedBooking = await bookingsServices.updateSingleBookingFromDB(bookingId, status, user);
+        const updatedBooking = await bookingsServices.updateSingleBookingFromDB(bookingId as string, status, user);
 
         const message =
             status === "cancelled"

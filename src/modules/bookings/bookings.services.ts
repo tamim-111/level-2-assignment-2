@@ -5,13 +5,13 @@ import { vehiclesServices } from "../vehicles/vehicles.services.js"
 const sendBookingIntoDB = async (Payload: Record<string, unknown>) => {
     const { customer_id, vehicle_id, rent_start_date, rent_end_date } = Payload
 
-    // FIX 1: Validate dates
+    // Validate dates
     const days = getNumberOfDays(rent_start_date as string, rent_end_date as string)
     if (days <= 0) {
         throw new Error("End date must be after start date")
     }
 
-    // FIX 2: Vehicle exists check
+    //  Vehicle exists check
     const vehicle = await vehiclesServices.getSingleVehiclesFromDB(vehicle_id as string)
     if (vehicle.rows.length === 0) {
         throw new Error("Vehicle not found")
@@ -23,7 +23,7 @@ const sendBookingIntoDB = async (Payload: Record<string, unknown>) => {
         throw new Error("Sorry this vehicle is already booked")
     }
 
-    // Update vehicle -> booked
+    // 
     await vehiclesServices.updateSingleVehiclesStatusFromDB("booked", vehicle_id as string)
 
     const total_price = daily_rent_price * days
@@ -69,7 +69,6 @@ const updateSingleBookingFromDB = async (bookingId: string, newStatus: string, u
     const startDate = new Date(booking.rent_start_date);
     const endDate = new Date(booking.rent_end_date);
 
-    // Auto-return if rental period has ended
     if (now > endDate && booking.status === "active") {
         await pool.query("UPDATE vehicles SET availability_status='available' WHERE id=$1", [booking.vehicle_id]);
         const auto = await pool.query(
@@ -79,25 +78,21 @@ const updateSingleBookingFromDB = async (bookingId: string, newStatus: string, u
         return auto;
     }
 
-    // CUSTOMER LOGIC
     if (user.role === "customer") {
         if (booking.customer_id !== user.id) throw new Error("You are not allowed to cancel this booking");
         if (now >= startDate) throw new Error("You can only cancel before the start date");
         if (newStatus !== "cancelled") throw new Error("Customers can only cancel bookings");
     }
 
-    // ADMIN LOGIC
     if (user.role === "admin" && newStatus !== "returned") {
         throw new Error("Admins can only mark as returned");
     }
 
-    // Update booking status
     const result = await pool.query(
         "UPDATE bookings SET status=$1 WHERE id=$2 RETURNING *",
         [newStatus, bookingId]
     );
 
-    // For cancellations or returns, vehicle becomes available
     if (newStatus === "cancelled" || newStatus === "returned") {
         await pool.query("UPDATE vehicles SET availability_status='available' WHERE id=$1", [booking.vehicle_id]);
     }

@@ -17,5 +17,8 @@ app.use((req, res) => {
         path: req.path
     });
 });
+app.get("/", async (req, res) => {
+    console.log("Hello World");
+});
 export default app;
 //# sourceMappingURL=app.js.map

@@ -69,7 +69,7 @@ const updateSingleBookingFromDB = async (bookingId: string, newStatus: string, u
     const startDate = new Date(booking.rent_start_date);
     const endDate = new Date(booking.rent_end_date);
 
-    if (now > endDate && booking.status === "active") {
+    if (now > endDate && booking.status === "active" && newStatus !== "cancelled") {
         await pool.query("UPDATE vehicles SET availability_status='available' WHERE id=$1", [booking.vehicle_id]);
         const auto = await pool.query(
             "UPDATE bookings SET status='returned' WHERE id=$1 RETURNING *",

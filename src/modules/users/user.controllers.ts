@@ -13,7 +13,7 @@ const getAllUser = async (req: Request, res: Response) => {
     }
     catch (err: any) {
         res.status(500).send({
-            "success": true,
+            "success": false,
             "message": err.message,
             "detail": err.detail
         })
@@ -25,7 +25,7 @@ const updateSingleUser = async (req: Request, res: Response) => {
         const loggedInUser = req.user!
         const userId = req.params.userId
 
-        if (loggedInUser.role !== "admin" && loggedInUser.id !== userId) {
+        if (loggedInUser.role !== "admin" && loggedInUser.id !== Number(userId)) {
             return res.status(403).json({ message: "Forbidden: You can update only your own profile" });
         }
 
@@ -39,14 +39,14 @@ const updateSingleUser = async (req: Request, res: Response) => {
         }
 
         res.send({
-            "success": true,
+            "success": false,
             "message": "User updated successfully",
             "data": result.rows[0]
         })
     }
     catch (err: any) {
         res.status(500).send({
-            "success": true,
+            "success": false,
             "message": err.message,
             "detail": err.detail
         })
@@ -66,7 +66,7 @@ const deleteSingleUser = async (req: Request, res: Response) => {
     }
     catch (err: any) {
         res.status(500).send({
-            "success": true,
+            "success": false,
             "message": err.message,
             "detail": err.detail
         })

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { bookingsServices } from "./bookings.services.js";
+import { pool } from "../../config/db.js";
 
 const createBooking = async (req: Request, res: Response) => {
     try {
@@ -15,75 +16,100 @@ const createBooking = async (req: Request, res: Response) => {
         res.status(500).send({
             "success": false,
             "message": err.message,
+            "detail": err.detail
         })
     }
 }
 
 const getAllBookings = async (req: Request, res: Response) => {
-
     try {
         const user = req.user;
 
-        let result;
+        if (!user) throw new Error("User not found");
 
-        if (user?.role === "admin") {
+        // Admin: get all bookings
+        if (user.role === "admin") {
+            const result = await bookingsServices.getAllBookingsFromDB();
 
-            result = await bookingsServices.getAllBookingsFromDB()
+            const enhanced = await Promise.all(
+                result.rows.map(async (booking: any) => {
+                    const [vehicleRes, customerRes] = await Promise.all([
+                        pool.query("SELECT vehicle_name, registration_number FROM vehicles WHERE id=$1", [booking.vehicle_id]),
+                        pool.query("SELECT name, email FROM users WHERE id=$1", [booking.customer_id])
+                    ]);
 
-            res.status(200).send({
-                "success": true,
-                "message": "Bookings retrieved successfully",
-                "data": result.rows
-            })
-        }
-        if (user?.role === "customer") {
-            const id = user?.id
-            result = await bookingsServices.getSingleBookingsFromDB(id)
+                    return {
+                        ...booking,
+                        vehicle: vehicleRes.rows[0],
+                        customer: customerRes.rows[0]
+                    };
+                })
+            );
 
-            return res.status(200).send({
+            return res.status(200).json({
                 success: true,
-                message: "Your bookings retrieved successfully",
-                data: result.rows
+                message: "Bookings retrieved successfully",
+                data: enhanced
             });
         }
+
+        // Customer: get own bookings
+        if (user.role === "customer") {
+            const result = await bookingsServices.getSingleBookingsFromDB(user.id);
+
+            const enhanced = await Promise.all(
+                result.rows.map(async (booking: any) => {
+                    const vehicleRes = await pool.query(
+                        "SELECT vehicle_name, registration_number, type FROM vehicles WHERE id=$1",
+                        [booking.vehicle_id]
+                    );
+
+                    return {
+                        ...booking,
+                        vehicle: vehicleRes.rows[0]
+                    };
+                })
+            );
+
+            return res.status(200).json({
+                success: true,
+                message: "Your bookings retrieved successfully",
+                data: enhanced
+            });
+        }
+
+        res.status(403).json({ success: false, message: "Access denied" });
+    } catch (err: any) {
+        res.status(500).json({ success: false, message: err.message });
     }
-    catch (err: any) {
-        res.status(500).send({
-            "success": false,
-            "message": err.message,
-        })
-    }
-}
+};
 
 const updateSingleBooking = async (req: Request, res: Response) => {
     try {
-        const status = req.body.status
-        const bookingId = req.params.bookingId
+        const bookingId = req.params.bookingId;
+        const status = req.body.status;
         const user = req.user;
 
-        const result = await bookingsServices.updateSingleBookingFromDB(bookingId as string, status, user)
-
-        let message = ""
-
-        if (status === "cancelled") {
-            message = "Booking cancelled successfully";
-        } else if (status === "returned") {
-            message = "Booking marked as returned. Vehicle is now available";
+        if (!status || !["cancelled", "returned"].includes(status)) {
+            throw new Error("Invalid status");
         }
 
-        res.status(200).send({
-            "success": true,
-            "message": "Booking cancelled successfully",
-            "data": result.rows[0]
-        })
+        const updatedBooking = await bookingsServices.updateSingleBookingFromDB(bookingId, status, user);
+
+        const message =
+            status === "cancelled"
+                ? "Booking cancelled successfully"
+                : "Booking marked as returned. Vehicle is now available";
+
+        res.status(200).json({
+            success: true,
+            message,
+            data: updatedBooking.rows ? updatedBooking.rows[0] : updatedBooking
+        });
+    } catch (err: any) {
+        res.status(400).json({ success: false, message: err.message });
     }
-    catch (err: any) {
-        res.status(500).send({
-            "success": false,
-            "message": err.message,
-        })
-    }
-}
+};
 
 export const bookingsControllers = {
     createBooking,

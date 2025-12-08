@@ -14,7 +14,8 @@ const getAllUser = async (req: Request, res: Response) => {
     catch (err: any) {
         res.status(500).send({
             "success": true,
-            message: err.message
+            "message": err.message,
+            "detail": err.detail
         })
     }
 }
@@ -22,13 +23,20 @@ const getAllUser = async (req: Request, res: Response) => {
 const updateSingleUser = async (req: Request, res: Response) => {
     try {
         const loggedInUser = req.user!
-        const id = req.params.id
+        const userId = req.params.userId
 
-        if (loggedInUser.role !== "admin" && loggedInUser.id !== id) {
+        if (loggedInUser.role !== "admin" && loggedInUser.id !== userId) {
             return res.status(403).json({ message: "Forbidden: You can update only your own profile" });
         }
 
-        const result = await userServices.updateSingleUserFromDB(req.body, id as string)
+        const result = await userServices.updateSingleUserFromDB(req.body, userId as string)
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
 
         res.send({
             "success": true,
@@ -39,16 +47,17 @@ const updateSingleUser = async (req: Request, res: Response) => {
     catch (err: any) {
         res.status(500).send({
             "success": true,
-            message: err.message
+            "message": err.message,
+            "detail": err.detail
         })
     }
 }
 
 const deleteSingleUser = async (req: Request, res: Response) => {
     try {
-        const id = req.params.id
+        const userId = req.params.userId
 
-        const result = await userServices.deleteSingleUserFromDB(id as string)
+        const result = await userServices.deleteSingleUserFromDB(userId as string)
 
         res.send({
             "success": true,
@@ -58,7 +67,8 @@ const deleteSingleUser = async (req: Request, res: Response) => {
     catch (err: any) {
         res.status(500).send({
             "success": true,
-            message: err.message
+            "message": err.message,
+            "detail": err.detail
         })
     }
 }

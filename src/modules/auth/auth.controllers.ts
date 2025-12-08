@@ -13,7 +13,8 @@ const signupUser = async (req: Request, res: Response) => {
     catch (err: any) {
         res.status(500).send({
             "success": false,
-            message: err.message
+            "message": err.message,
+            "detail": err.detail
         })
     }
 }
@@ -31,7 +32,8 @@ const signinUser = async (req: Request, res: Response) => {
     catch (err: any) {
         res.status(500).send({
             "success": false,
-            message: err.message
+            "message": err.message,
+            "detail": err.detail
         })
     }
 }

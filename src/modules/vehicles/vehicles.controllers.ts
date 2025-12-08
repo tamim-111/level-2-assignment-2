@@ -1,5 +1,6 @@
 import { Request, Response } from "express"
 import { vehiclesServices } from "./vehicles.services.js"
+import { bookingsServices } from "../bookings/bookings.services.js"
 
 const createVehicle = async (req: Request, res: Response) => {
     try {
@@ -11,7 +12,10 @@ const createVehicle = async (req: Request, res: Response) => {
         })
     }
     catch (err: any) {
-        res.status(500).send({ message: err.message })
+        res.status(500).send({
+            "message": err.message,
+            "detail": err.detail
+        })
     }
 }
 
@@ -33,7 +37,10 @@ const getAllVehicle = async (req: Request, res: Response) => {
         }
     }
     catch (err: any) {
-        res.status(500).send({ message: err.message })
+        res.status(500).send({
+            "message": err.message,
+            "detail": err.detail
+        })
     }
 }
 
@@ -43,12 +50,15 @@ const getSingleVehicle = async (req: Request, res: Response) => {
         const result = await vehiclesServices.getSingleVehiclesFromDB(vehicleId as string)
         res.send({
             "success": true,
-            "message": "Vehicles retrieved successfully",
+            "message": "Vehicle retrieved successfully",
             "data": result.rows[0]
         })
     }
     catch (err: any) {
-        res.status(500).send({ message: err.message })
+        res.status(500).send({
+            "message": err.message,
+            "detail": err.detail
+        })
     }
 }
 
@@ -63,24 +73,42 @@ const updateSingleVehicle = async (req: Request, res: Response) => {
         })
     }
     catch (err: any) {
-        res.status(500).send({ message: err.message })
+        res.status(500).send({
+            "message": err.message,
+            "detail": err.detail
+        })
     }
 }
 
 const deleteSingleVehicle = async (req: Request, res: Response) => {
     try {
-        const vehicleId = req.params.vehicleId
-        const result = await vehiclesServices.deleteSingleVehiclesFromDB(vehicleId as string)
-        res.send({
-            "success": true,
-            "message": "Vehicle deleted successfully",
-            "data": result.rows[0]
-        })
+        const vehicleId = req.params.vehicleId;
+
+        // check active bookings
+        const activeBookings = await bookingsServices.getActiveBookingsByVehicleId(vehicleId as string);
+
+        if (activeBookings.rows.length > 0) {
+            return res.status(400).send({
+                success: false,
+                message: "Cannot delete vehicle because an active booking exists"
+            });
+        }
+
+        // safe to delete
+        await vehiclesServices.deleteSingleVehiclesFromDB(vehicleId as string);
+
+        return res.send({
+            success: true,
+            message: "Vehicle deleted successfully"
+        });
     }
     catch (err: any) {
-        res.status(500).send({ message: err.message })
+        return res.status(500).send({
+            message: err.message,
+            detail: err.detail
+        });
     }
-}
+};
 
 export const vehiclesControllers = {
     createVehicle,

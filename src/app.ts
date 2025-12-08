@@ -25,4 +25,8 @@ app.use((req: Request, res: Response) => {
     })
 })
 
+app.get("/", async (req, res) => {
+    console.log("Hello World")
+})
+
 export default app

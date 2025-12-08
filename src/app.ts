@@ -18,9 +18,10 @@ app.use("/api/v1/users", userRoutes)
 
 app.use("/api/v1/bookings", bookingsRoutes)
 
-app.get("/", async (req, res) => {
+app.get("/", (req, res) => {
     res.send("Hello World")
 })
+
 
 app.use((req: Request, res: Response) => {
     res.status(404).json({

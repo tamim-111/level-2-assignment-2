@@ -28,6 +28,13 @@ const updateSingleVehiclesFromDB = async (Payload: Record<string, unknown>, vehi
     return result
 }
 
+const updateSingleVehiclesStatusFromDB = async (availability_status: string, vehicleId: string) => {
+
+    const result = await pool.query("UPDATE vehicles SET availability_status=$1 WHERE id=$2 RETURNING *", [availability_status, vehicleId])
+
+    return result
+}
+
 const deleteSingleVehiclesFromDB = async (vehicleId: string) => {
     const result = await pool.query("DELETE FROM vehicles WHERE id=$1", [vehicleId])
 
@@ -39,5 +46,6 @@ export const vehiclesServices = {
     getAllVehiclesFromDB,
     getSingleVehiclesFromDB,
     updateSingleVehiclesFromDB,
+    updateSingleVehiclesStatusFromDB,
     deleteSingleVehiclesFromDB
 }

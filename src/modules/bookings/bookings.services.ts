@@ -5,13 +5,13 @@ import { vehiclesServices } from "../vehicles/vehicles.services.js"
 const sendBookingIntoDB = async (Payload: Record<string, unknown>) => {
     const { customer_id, vehicle_id, rent_start_date, rent_end_date } = Payload
 
-    // Validate dates
+
     const days = getNumberOfDays(rent_start_date as string, rent_end_date as string)
     if (days <= 0) {
         throw new Error("End date must be after start date")
     }
 
-    //  Vehicle exists check
+
     const vehicle = await vehiclesServices.getSingleVehiclesFromDB(vehicle_id as string)
     if (vehicle.rows.length === 0) {
         throw new Error("Vehicle not found")
@@ -23,7 +23,7 @@ const sendBookingIntoDB = async (Payload: Record<string, unknown>) => {
         throw new Error("Sorry this vehicle is already booked")
     }
 
-    // 
+
     await vehiclesServices.updateSingleVehiclesStatusFromDB("booked", vehicle_id as string)
 
     const total_price = daily_rent_price * days

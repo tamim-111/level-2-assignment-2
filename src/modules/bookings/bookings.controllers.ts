@@ -28,6 +28,22 @@ const getAllBookings = async (req: Request, res: Response) => {
         if (!user) throw new Error("User not found");
 
 
+        const autoReturnBookings = await pool.query(
+            "SELECT id, vehicle_id FROM bookings WHERE status='active' AND rent_end_date < NOW()"
+        );
+
+        for (const booking of autoReturnBookings.rows) {
+            await pool.query(
+                "UPDATE bookings SET status='returned' WHERE id=$1",
+                [booking.id]
+            );
+            await pool.query(
+                "UPDATE vehicles SET availability_status='available' WHERE id=$1",
+                [booking.vehicle_id]
+            );
+        }
+
+
         if (user.role === "admin") {
             const result = await bookingsServices.getAllBookingsFromDB();
 

@@ -2,9 +2,11 @@
 A fully modular backend API for managing a vehicle rental business.
 Includes role-based authentication, vehicle inventory management, customer profiles, and booking lifecycle handling.
 
-## live url:
+## live url and github repo:
 
 https://level-2-assignment-2-ochre.vercel.app/
+
+https://github.com/tamim-111/level-2-assignment-2
 
 ## ✨ Features
 
